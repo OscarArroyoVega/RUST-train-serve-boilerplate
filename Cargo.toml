@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.93"
-reqwest = "0.12.9"
+polars = { version = "0.44.2", features = ["csv", "lazy", "strings"] }
+reqwest = { version = "0.12.9", features = ["blocking"] }
