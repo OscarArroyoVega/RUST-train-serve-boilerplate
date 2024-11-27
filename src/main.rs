@@ -37,6 +37,6 @@ fn download_csv_file() -> anyhow::Result<(String)> {
         // Copy the bytes to a file on disk
         std::fs::write(file_path, bytes)?;  
 
-        Ok((file_path.to_string()))
+        Ok(file_path.to_string())
 
    }
