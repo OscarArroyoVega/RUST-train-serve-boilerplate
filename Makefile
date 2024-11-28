@@ -1,6 +1,9 @@
-run-dev:
-	cargo run
+run-training-dev:
+	cargo run --bin train
 
-run-release:
-	cargo run --release
-	./target/release/house-price-predictor
+run-api-dev:
+	cargo run --bin api
+
+#run-release:
+#	cargo run --release
+#	./target/release/house-price-predictor
