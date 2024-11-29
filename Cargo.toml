@@ -14,7 +14,9 @@ path = "src/bin/api.rs"
 [dependencies]
 anyhow = "1.0.93"
 cmake = "0.1"
+ndarray = "0.16.1"
 polars = { version = "0.44.2", features = ["csv", "ndarray"] }
+polars-core = "0.44.2"
 rand = "0.8.5"
 reqwest = { version = "0.12.9", features = ["blocking"] }
 xgboost = "0.1.4"

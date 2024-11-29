@@ -30,13 +30,13 @@ ENV LIBCLANG_PATH=/usr/lib/llvm-11/lib
 
 
 # Copy the project files into the container
-COPY . /workspace
-
-# Diagnostic: List files in /workspace to verify
-RUN ls -la /workspace
+#COPY Cargo.toml Cargo.lock /workspace/
+#COPY README.md /workspace/
+#COPY src/ /workspace/src/
+#COPY boston_housing.csv /workspace/
 
 # Build the application
-RUN cargo build --release
+#RUN cargo build --release
 
 # Set the command to run your application
-CMD ["cargo", "run", "--release"]
+CMD ["bash"]

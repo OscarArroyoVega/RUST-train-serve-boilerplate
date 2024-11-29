@@ -3,6 +3,7 @@ use rand::thread_rng;
 use rand::seq::SliceRandom;
 use xgboost::{parameters, Booster, DMatrix};
 
+
 fn main() -> anyhow::Result<()> {
     println!("Start training script");
 
@@ -16,10 +17,12 @@ fn main() -> anyhow::Result<()> {
     let (train_df, test_df) = train_test_split(&df, 0.2)?;
 
     // 4 split the data into features and target
-    let (X_train, y_train) = split_features_and_target(&train_df)?;
-    let (X_test, y_test) = split_features_and_target(&test_df)?;
+    let (x_train, y_train) = split_features_and_target(&train_df)?;
+    let (x_test, y_test) = split_features_and_target(&test_df)?;
 
     // 5. Train a XGBoost model
+    let model_path = train_xgboost_model(&x_train, &y_train, &x_test, &y_test)?;
+    println!("Model saved to: {}", model_path);
 
     // 6. Push the model to the AWS s3 bucket (model registry)
 
@@ -27,7 +30,8 @@ fn main() -> anyhow::Result<()> {
 }
 
 /// download the CSV file from the internet and save it to disk
-fn download_csv_file() -> anyhow::Result<String> {
+fn download_csv_file(
+) -> anyhow::Result<String> {
 
     // to declare a variable we use let
     let url: &str = "https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv";  
@@ -49,7 +53,8 @@ fn download_csv_file() -> anyhow::Result<String> {
 }
 
 /// load the CSV file from disk into Polars DataFrame
-fn load_csv_file(file_path: &str) -> anyhow::Result<DataFrame> {
+fn load_csv_file(file_path: &str
+) -> anyhow::Result<DataFrame> {
 
     // load the CSV file from disk into Polars DataFrame
     let df: DataFrame = CsvReader::new(std::fs::File::open(file_path)?)
@@ -107,7 +112,8 @@ pub fn train_test_split(
 }
 
 /// Splits the given DataFrame into 2 dataframes: one for features and the other for the target
-pub fn split_features_and_target(df: &DataFrame) -> anyhow::Result<(DataFrame, DataFrame)> {
+pub fn split_features_and_target(df: &DataFrame
+) -> anyhow::Result<(DataFrame, DataFrame)> {
 
     let feature_names = vec![
         "crim", "zn", "indus", "chas", "nox", "rm", "age", "dis", "rad", "tax",
@@ -121,69 +127,89 @@ pub fn split_features_and_target(df: &DataFrame) -> anyhow::Result<(DataFrame, D
     Ok((features, target))
 }
 
-/// Train a XGBoost model
-/// Evaluate the model performance
-/// Save the model locally and returns a path to generate the model file
-pub fn train_xgboost_model(
-    X_train: &DataFrame, 
+/// Converts Polars DataFrames into XGBoost DMatrix objects
+fn transform_dataframe_to_dmatrix(
+    x_train: &DataFrame,
     y_train: &DataFrame,
-    X_test: &DataFrame,
+    x_test: &DataFrame,
+    y_test: &DataFrame,
+) -> anyhow::Result<(DMatrix, DMatrix)> {
+    // Transform Polars DataFrames into 2D arrays
+    let x_train_array = x_train.to_ndarray::<Float32Type>(IndexOrder::C)?;
+    let y_train_array = y_train.to_ndarray::<Float32Type>(IndexOrder::C)?;
+    let x_test_array = x_test.to_ndarray::<Float32Type>(IndexOrder::C)?;
+    let y_test_array = y_test.to_ndarray::<Float32Type>(IndexOrder::C)?;
+
+    // Convert arrays to slices
+    let x_train_slice = x_train_array.as_slice()
+        .ok_or_else(|| anyhow::anyhow!("Failed to convert x_train to slice"))?;
+    let y_train_slice = y_train_array.as_slice()
+        .ok_or_else(|| anyhow::anyhow!("Failed to convert y_train to slice"))?;
+    let x_test_slice = x_test_array.as_slice()
+        .ok_or_else(|| anyhow::anyhow!("Failed to convert x_test to slice"))?;
+    let y_test_slice = y_test_array.as_slice()
+        .ok_or_else(|| anyhow::anyhow!("Failed to convert y_test to slice"))?;
+
+    // Create DMatrix objects
+    let mut dmatrix_train = DMatrix::from_dense(x_train_slice, x_train.height())?;
+    dmatrix_train.set_labels(y_train_slice)?;
+
+    let mut dmatrix_test = DMatrix::from_dense(x_test_slice, x_test.height())?;
+    dmatrix_test.set_labels(y_test_slice)?;
+
+    Ok((dmatrix_train, dmatrix_test))
+}
+
+/// Train a XGBoost model
+pub fn train_xgboost_model(
+    x_train: &DataFrame, 
+    y_train: &DataFrame,
+    x_test: &DataFrame,
     y_test: &DataFrame
 ) -> anyhow::Result<String> {
 
-    // Transform Polars DataFrames into 2D arrays in row-major order
-    let x_train_array = X_train.to_ndarray::<Float32Type>(IndexOrder::C)?;
-    let y_train_array = y_train.to_ndarray::<Float32Type>(IndexOrder::C)?;
-    let x_test_array = X_test.to_ndarray::<Float32Type>(IndexOrder::C)?;
-    let y_test_array = y_test.to_ndarray::<Float32Type>(IndexOrder::C)?;
+    // Convert DataFrames to DMatrix using helper function
+    let (dmatrix_train, dmatrix_test) = transform_dataframe_to_dmatrix(
+        x_train,
+        y_train,
+        x_test,
+        y_test
+    )?;
 
-    println!("x_train_array: {:?}", x_train_array);
-    println!("x_train_slice: {:?}", x_train_array.as_slice().clone());
-
-    // Convert the 2D arrays into slices &[f32]
-    let x_train_slice = x_train_array.as_slice()
-        .expect("Failed to convert x_train_array to slice - array may not be contiguous");
-    let y_train_slice = y_train_array.as_slice()
-        .expect("Failed to convert y_train_array to slice - array may not be contiguous");
-    let x_test_slice = x_test_array.as_slice()
-        .expect("Failed to convert x_test_array to slice - array may not be contiguous");
-    let y_test_slice = y_test_array.as_slice()
-        .expect("Failed to convert y_test_array to slice - array may not be contiguous");
-
-    // Transform the given DataFrames into XGBoost DMatrix objects for the training set
-    let mut dmatrix_train = DMatrix::from_dense(x_train_slice, X_train.height())?;
-    dmatrix_train.set_labels(y_train_slice)?;
-
-    // for the testing set
-    let mut dmatrix_test = DMatrix::from_dense(x_test_slice, X_test.height())?;
-    dmatrix_test.set_labels(y_test_slice)?;
-
-    // train is used to fit parameters, and test is used to evaluate the model
+    // Create evaluation sets
     let evaluation_sets = &[
         (&dmatrix_train, "train"),
         (&dmatrix_test, "test")
     ];
 
+
     // Set the configuration for the XGBoost model
     // Set the hyperparameters for the model
     // Try to find the best hyperparameters for the model
     let training_params = parameters::TrainingParametersBuilder::default()
-        .dtrain(&dmatrix_train)
-        .evaluation_sets(Some(evaluation_sets))
-        // .custom_objective_fn(Objective::RegLinear)
-        // .custom_evaluation_fn(parameters::EvaluationMetric::RMSE)
-        .build().unwrap();
+    dtrain(&dmatrix_train)
+    .evaluation_sets(Some(evaluation_sets))
+    .tree_method(parameters::TreeMethod::Hist) // Add explicit tree method
+    .objective(parameters::Objective::RegSquaredError)
+    .eval_metric(parameters::EvaluationMetric::RMSE)
+    .eta(0.3)
+    .max_depth(6)
+    .num_boost_round(10)
+    .build()
+    .unwrap();
 
     // Train the model
-    let booster = Booster::train(&training_params)?;
+    let model = Booster::train(&training_params)?;
 
     // print the the model performance
-    // TODO: check which evaluation metric is used
-    println!("Test: {:?}", booster.predict(&dmatrix_test).unwrap());
+    // Evaluate and print final metrics
+    let predictions = model.predict(&dmatrix_test)?;
+    println!("\nFinal Metrics:");
+    println!("Test predictions (first 5): {:?}", &predictions[..5.min(predictions.len())]);
 
     // Save the model to a file
     let model_path = "BostonHousingModel.bin";
-    booster.save(model_path)?;
+    model.save(model_path)?;
     println!("Model saved to: {}", model_path);
 
     Ok(model_path.to_string())
