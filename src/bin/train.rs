@@ -2,10 +2,14 @@ use polars::prelude::*;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 use xgboost::{parameters, Booster, DMatrix};
-
+use aws_config::Region;
+use aws_config::meta::region::RegionProviderChain;
+use tokio; // for async runtime
+use dotenv::dotenv;
 
 fn main() -> anyhow::Result<()> {
-    println!("Start training script");
+    // load the environment variables from the .env file
+    dotenv().ok();
 
     // 1 load external CSV file to disk
     let csv_file_path = download_csv_file()?;
@@ -25,6 +29,19 @@ fn main() -> anyhow::Result<()> {
     println!("Model saved to: {}", model_path);
 
     // 6. Push the model to the AWS s3 bucket (model registry)
+    let bucket_name = std::env::var("AWS_BUCKET_NAME")?;
+    let key = std::env::var("AWS_KEY")?;
+
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?;
+    
+    runtime.block_on(push_model_to_s3(
+        &model_path,
+        &bucket_name,
+        &key    
+     ))?;
+    println!("Model pushed to S3 bucket");
 
     Ok(())
 }
@@ -184,19 +201,12 @@ pub fn train_xgboost_model(
 
 
     // Set the configuration for the XGBoost model
-    // Set the hyperparameters for the model
-    // Try to find the best hyperparameters for the model
     let training_params = parameters::TrainingParametersBuilder::default()
-    dtrain(&dmatrix_train)
-    .evaluation_sets(Some(evaluation_sets))
-    .tree_method(parameters::TreeMethod::Hist) // Add explicit tree method
-    .objective(parameters::Objective::RegSquaredError)
-    .eval_metric(parameters::EvaluationMetric::RMSE)
-    .eta(0.3)
-    .max_depth(6)
-    .num_boost_round(10)
-    .build()
-    .unwrap();
+        .dtrain(&dmatrix_train)
+        .evaluation_sets(Some(evaluation_sets))
+        // .custom_objective_fn(Objective::RegLinear)
+        // .custom_evaluation_fn(parameters::EvaluationMetric::RMSE)
+        .build().unwrap();
 
     // Train the model
     let model = Booster::train(&training_params)?;
@@ -219,4 +229,36 @@ pub fn train_xgboost_model(
 pub fn load_xgboost_model(model_path: &str) -> anyhow::Result<Booster> {
     let model = Booster::load(model_path)?;
     Ok(model) 
+}
+
+
+
+/// Push the model to the AWS s3 bucket (model registry)
+pub async fn push_model_to_s3(model_path: &str, bucket_name: &str, key: &str) -> anyhow::Result<()> {
+    
+    // Create an AWS S3 client to interact with the S3 bucket
+    let region_provider = RegionProviderChain::default_provider().or_else(Region::new("us-east-1"));
+    let config = aws_config::from_env()
+        .region(region_provider)
+        .load()
+        .await;
+
+    let s3_client = aws_sdk_s3::Client::new(&config);
+
+    // load model file into memory
+    let model_bytes = std::fs::read(model_path)?;
+
+
+
+    // Upload the file to S3
+    let result = s3_client
+        .put_object()
+        .bucket(bucket_name)   
+        .key(key)
+        .body(model_bytes
+        .into())
+        .send()
+        .await?;
+
+    Ok(())
 }
