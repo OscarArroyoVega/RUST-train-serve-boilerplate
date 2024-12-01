@@ -1943,6 +1943,7 @@ dependencies = [
  "polars-core",
  "rand",
  "reqwest",
+ "serde",
  "tokio",
  "xgboost",
 ]

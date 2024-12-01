@@ -199,14 +199,42 @@ pub fn train_xgboost_model(
         (&dmatrix_test, "test")
     ];
 
+    use xgboost::parameters::learning::Objective;
+    use xgboost::parameters::BoosterParameters;
+    use xgboost::parameters::tree::TreeBoosterParametersBuilder; 
+    use xgboost::Booster;
+    use xgboost::parameters::BoosterType; 
 
-    // Set the configuration for the XGBoost model
+     // Create booster parameters with tree configuration
+     let booster_params = parameters::BoosterParametersBuilder::default()
+        .booster_type(
+            BoosterType::Tree(
+                TreeBoosterParametersBuilder::default()
+                    .max_depth(6)
+                    .eta(0.3)
+                    .build()
+                    .unwrap()
+            )
+        )
+        .learning_params(
+            parameters::learning::LearningTaskParametersBuilder::default()
+                .objective(Objective::RegLinear)
+                .build()
+                .unwrap()
+        )
+        .build()
+        .unwrap();
+
+    // Create training parameters
     let training_params = parameters::TrainingParametersBuilder::default()
         .dtrain(&dmatrix_train)
         .evaluation_sets(Some(evaluation_sets))
-        // .custom_objective_fn(Objective::RegLinear)
-        // .custom_evaluation_fn(parameters::EvaluationMetric::RMSE)
-        .build().unwrap();
+        .booster_params(booster_params)
+        .boost_rounds(100)
+        .build()
+        .unwrap();
+
+
 
     // Train the model
     let model = Booster::train(&training_params)?;
@@ -230,7 +258,6 @@ pub fn load_xgboost_model(model_path: &str) -> anyhow::Result<Booster> {
     let model = Booster::load(model_path)?;
     Ok(model) 
 }
-
 
 
 /// Push the model to the AWS s3 bucket (model registry)
