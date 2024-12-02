@@ -22,22 +22,41 @@ docker-build:
 docker-shell: docker-build
 	docker run -it -v ${PWD}:/workspace house-price-predictor
 
-docker-shell-cache: docker-build
+docker-shell-cache-api: docker-build
 	docker run -it \
 		-v ${PWD}:/workspace \
-		-v cargo-cache:/usr/local/cargo/registry \
-		-v target-cache:/workspace/house-price-predictor/target \
+		-v cargo-cache-api:/usr/local/cargo/registry \
+		-v target-cache-api:/workspace/house-price-predictor/target \
+		--name house-price-predictor-api \
+		house-price-predictor
 
-docker-terminal:
+docker-shell-cache-train: docker-build
+	docker run -it \
+		-v ${PWD}:/workspace \
+		-v cargo-cache-train:/usr/local/cargo/registry \
+		-v target-cache-train:/workspace/house-price-predictor/target \
+		--name house-price-predictor-train \
+		house-price-predictor
+
+docker-terminal-api:
 	@powershell -NoProfile -Command "\
-		$$container_id = docker ps --filter 'ancestor=house-price-predictor' --format '{{.ID}}'; \
+		$$container_id = docker ps --filter 'name=house-price-predictor-api' --format '{{.ID}}'; \
 		if ($$container_id) { \
-			Write-Host \"Attaching to container $$container_id...\"; \
+			Write-Host \"Attaching to API container $$container_id...\"; \
 			docker exec -it $$container_id /bin/bash \
 		} else { \
-			Write-Host \"Container not found. Make sure it is running.\" \
+			Write-Host \"API container not found. Make sure it is running.\" \
 		}"
 
+docker-terminal-train:
+	@powershell -NoProfile -Command "\
+		$$container_id = docker ps --filter 'name=house-price-predictor-train' --format '{{.ID}}'; \
+		if ($$container_id) { \
+			Write-Host \"Attaching to training container $$container_id...\"; \
+			docker exec -it $$container_id /bin/bash \
+		} else { \
+			Write-Host \"Training container not found. Make sure it is running.\" \
+		}"
 
 
 # DEV RUNNABLES FOR TRAINING AND API BINARIES_____________________________________

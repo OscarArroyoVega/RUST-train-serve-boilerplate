@@ -25,7 +25,7 @@ pub struct PredictionRequest {
 /// Prediction response payload
 #[derive(Debug, Serialize)]
 pub struct PredictionResponse {
-    prediction: f64
+    pub prediction: f64
 }
 
 /// download the CSV file from the internet and save it to disk

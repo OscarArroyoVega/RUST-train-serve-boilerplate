@@ -1,8 +1,6 @@
-use actix_web::{HttpServer, App, Responder, HttpResponse, get, post, web};
+use actix_web::{HttpServer, App, Responder, HttpResponse, get, post, web, Error};
 use log::info;
 use env_logger;
-use serde::{Deserialize, Serialize};
-use std::fmt::Debug; 
 use dotenv::dotenv;
 use house_price_predictor::modules::{aws::download_model_from_s3, data::{PredictionRequest, PredictionResponse}};
 
@@ -17,12 +15,12 @@ async fn health() -> impl Responder {
 /// Predict endpoint
 /// Accepts a JSON payload request with the features and returns a JSON response with the prediction
 #[post("/predict")]
-async fn predict(payload: web::Json<PredictionRequest>) -> impl Responder {
+async fn predict(payload: web::Json<PredictionRequest>) -> Result<HttpResponse, actix_web::Error> {
     info!("Received prediction request: {:?}", payload);
     // For now, return a dummy prediction
     let prediction = 25.0;  // dummy value
     println!("Prediction: {} Payload: {:?}", prediction, payload);
-    HttpResponse::Ok().json(PredictionResponse {prediction})
+    Ok(HttpResponse::Ok().json(PredictionResponse {prediction}))
 }
 
 /// Main function to start the API server.
