@@ -66,7 +66,11 @@ run-train-dev:
 run-api-dev:
 	cargo run --bin api
 
-
+kill-api-dev:
+	@echo "Checking for API processes..."
+	@ps aux | grep "target/debug/api" | grep -v grep || echo "No API process found"
+	@echo "Attempting to stop API process..."
+	@pkill -f "target/debug/api" || echo "No API process was running"
 
 # CLIENT REQUESTS________________________________________________________________
 request-health:
