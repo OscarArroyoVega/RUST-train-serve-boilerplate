@@ -1,7 +1,10 @@
 use polars::prelude::*;
 use xgboost::{parameters, Booster, DMatrix};
+use xgboost::parameters::learning::Objective;
+use xgboost::parameters::tree::TreeBoosterParametersBuilder; 
+use xgboost::parameters::BoosterType; 
 
-
+pub type Model01 = Booster;
 
 /// Converts Polars DataFrames into XGBoost DMatrix objects
 pub fn transform_dataframe_to_dmatrix(
@@ -59,12 +62,6 @@ pub fn train_xgboost_model(
         (&dmatrix_test, "test")
     ];
 
-    use xgboost::parameters::learning::Objective;
-    use xgboost::parameters::BoosterParameters;
-    use xgboost::parameters::tree::TreeBoosterParametersBuilder; 
-    use xgboost::Booster;
-    use xgboost::parameters::BoosterType; 
-
      // Create booster parameters with tree configuration
      let booster_params = parameters::BoosterParametersBuilder::default()
         .booster_type(
@@ -94,8 +91,6 @@ pub fn train_xgboost_model(
         .build()
         .unwrap();
 
-
-
     // Train the model
     let model = Booster::train(&training_params)?;
 
@@ -112,6 +107,7 @@ pub fn train_xgboost_model(
 
     Ok(model_path.to_string())
 }
+
 
 /// Loads an XGBoost model from a binary file and returns it
 pub fn load_xgboost_model(model_path: &str) -> anyhow::Result<Booster> {

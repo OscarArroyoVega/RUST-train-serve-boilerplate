@@ -1,21 +1,48 @@
-use polars::prelude::*;
-use rand::thread_rng;
-use rand::seq::SliceRandom;
-use xgboost::{parameters, Booster, DMatrix};
-use aws_config::Region;
-use aws_config::meta::region::RegionProviderChain;
 use tokio; // for async runtime
 use dotenv::dotenv;
+use log::info;
+use clap::Parser;
 
 use house_price_predictor::modules::{
     aws::push_model_to_s3,
     data::{download_csv_file, load_csv_file, train_test_split, split_features_and_target},
-    model::{train_xgboost_model, transform_dataframe_to_dmatrix}
+    model::train_xgboost_model
 };
 
+#[derive(Debug, Parser)]
+struct Args {
+    #[arg(short, long = "bucket-name-s3")]
+    bucket_name_s3: String,
+    #[arg(short, long = "key-s3")]
+    key_s3: String,
+    #[arg(short, long = "region")]
+    region: String,
+}
+
 fn main() -> anyhow::Result<()> {
-    // load the environment variables from the .env file
+    // Initialize the logger
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
+    info!("Training the model...");
     dotenv().ok();
+
+    // Parse command line arguments
+    let args = Args::parse();
+    // Store values in new variables to avoid move issues
+    let bucket_name = if args.bucket_name_s3.is_empty() {
+        std::env::var("AWS_BUCKET_NAME").expect("AWS_BUCKET_NAME must be set")
+    } else {args.bucket_name_s3.clone()       
+    };
+
+    let key = if args.key_s3.is_empty() {
+        std::env::var("AWS_KEY").expect("AWS_KEY must be set")
+    } else {args.key_s3.clone()   
+    };
+
+    info!("AWS Configuration:");
+    info!("Bucket: {}", bucket_name);
+    info!("Key: {}", key);
+    info!("Region: {:?}", args.region);
 
     // 1 load external CSV file to disk
     let csv_file_path = download_csv_file()?;
@@ -35,19 +62,21 @@ fn main() -> anyhow::Result<()> {
     println!("Model saved to: {}", model_path);
 
     // 6. Push the model to the AWS s3 bucket (model registry)
-    let bucket_name = std::env::var("AWS_BUCKET_NAME")?;
-    let key = std::env::var("AWS_KEY")?;
+    info!("AWS Configuration:");
+    info!("Bucket: {}", args.bucket_name_s3);
+    info!("Key: {}", args.key_s3);
+    info!("Region: {:?}", args.region);
 
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?;
     
+    info!("Attempting to push model to S3...");
     runtime.block_on(push_model_to_s3(
         &model_path,
-        &bucket_name,
-        &key    
-     ))?;
-    println!("Model pushed to S3 bucket");
-
+        &args.bucket_name_s3,
+        &args.key_s3    
+    ))?;
+    info!("Model successfully pushed to S3 bucket");
     Ok(())
 }

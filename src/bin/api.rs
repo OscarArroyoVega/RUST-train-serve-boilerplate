@@ -1,8 +1,27 @@
-use actix_web::{HttpServer, App, Responder, HttpResponse, get, post, web, Error};
+use actix_web::{HttpServer, App, Responder, HttpResponse, get, post, web};
 use log::info;
 use env_logger;
 use dotenv::dotenv;
 use house_price_predictor::modules::{aws::download_model_from_s3, data::{PredictionRequest, PredictionResponse}};
+use std::sync::Arc;
+use house_price_predictor::modules::model::{Model01, load_xgboost_model};
+use clap:: Parser;
+
+
+#[derive(Debug, Parser)]
+struct Args {
+    #[arg(short, long = "bucket-name-s3")]
+    bucket_name_s3: String,
+    #[arg(short, long = "key-s3")]
+    key_s3: String,
+    #[arg(short, long = "region")]
+    region: String,
+}
+
+/// Application state that will be shared across all the workers of the API endpoints
+struct AppState {
+    model: Arc<Model01>,
+}
 
 /// Health check endpoint
 #[get("/health")]  // This attribute is used to define the health check endpoint
@@ -26,30 +45,45 @@ async fn predict(payload: web::Json<PredictionRequest>) -> Result<HttpResponse, 
 /// Main function to start the API server.
 #[actix_web::main]  // This attribute is used to mark the main function for the actix_web server
 async fn main() -> std::io::Result<()> {
-    // Load .env file and handle error if it fails
-    if let Err(e) = dotenv() {
-        eprintln!("Warning: Failed to load .env file: {}", e);
-    }
+    // Initialize the logger
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
     info!("Starting API server...");
+    dotenv().ok();
+
+    // Parse command line arguments
+    let args = Args::parse();
+    // Store values in new variables to avoid move issues
+    let bucket_name = &args.bucket_name_s3;
+    let key = &args.key_s3;
+    let region = &args.region;
+
+    info!("AWS Configuration:");
+    info!("Bucket: {}", bucket_name);
+    info!("Key: {}", key);
+    info!("Region: {:?}", region);
 
     // Download the model from the AWS s3 bucket (model registry)
-    let bucket_name = std::env::var("AWS_BUCKET_NAME")
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-    let key = std::env::var("AWS_KEY")
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-
-    let model_path = download_model_from_s3(&bucket_name, &key).await
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-
-    println!("Model downloaded to: {}", model_path.display());
+    let model_path = download_model_from_s3(&bucket_name, &key).await.unwrap();
+    
+    println!("Model downloaded to: {}", model_path);
 
     // Create the server and bind it to the address and port
-    HttpServer::new(|| {
-        info!("Creating new app instance"); 
+    HttpServer::new(move|| {
+        // Load the model into memory
+        let model = load_xgboost_model(&model_path).unwrap();
+
+        // Create the state data structure that will be shared across all the workers of the API endpoints
+        let app_state = Arc::new(AppState {
+            model: Arc::new(model),  
+        });
+
+        info!("Creating new app instance");
+
         App::new()
             .service(health)  // Add the health check endpoint as a worker
             .service(predict)  // Add the predict endpoint as a worker
+            .app_data(web::Data::new(app_state))  // Add the app state to the app data
     })
     .bind(("127.0.0.1", 8080))?
     .run() 

@@ -14,8 +14,12 @@ else
 endif
 
 
+# Load environment variables from .env file_____________________________________________________________________
+include .env
+export $(shell sed 's/=.*//' .env)
 
-# DEV CONTAINER RUNNABLES_________________________________________________________
+
+# DEV CONTAINER RUNNABLES_____________________________________________________________________________________
 docker-build:
 	docker build -t house-price-predictor -f .devcontainer/Dockerfile .
 
@@ -59,12 +63,39 @@ docker-terminal-train:
 		}"
 
 
-# DEV RUNNABLES FOR TRAINING AND API BINARIES_____________________________________
-run-train-dev:
-	cargo run --bin train
+# DEV RUNNABLES FOR TRAINING AND API BINARIES________________________________________________________________
+check-env:
+	@if [ -z "$(AWS_BUCKET_NAME)" ]; then \
+		echo "Error: AWS_BUCKET_NAME is not set"; \
+		exit 1; \
+	fi
+	@if [ -z "$(AWS_KEY)" ]; then \
+		echo "Error: AWS_KEY is not set"; \
+		exit 1; \
+	fi
+	@if [ -z "$(AWS_REGION)" ]; then \
+		echo "Error: AWS_REGION is not set"; \
+		exit 1; \
+	fi
+
+# Update the run commands to depend on check-env
+run-train-dev: check-env
+	cargo run --bin train -- \
+		--bucket-name-s3="$(AWS_BUCKET_NAME)" \
+		--key-s3="$(AWS_KEY)" \
+		--region="$(AWS_REGION)"
+
+run-train-binary: check-env
+	./target/debug/train \
+		--bucket-name-s3="$(AWS_BUCKET_NAME)" \
+		--key-s3="$(AWS_KEY)" \
+		--region="$(AWS_REGION)"
 
 run-api-dev:
-	cargo run --bin api
+	cargo run --bin api -- \
+		--bucket-name-s3="$(AWS_BUCKET_NAME)" \
+		--key-s3="$(AWS_KEY)" \
+		--region="$(AWS_REGION)"
 
 kill-api-dev:
 	@echo "Checking for API processes..."
@@ -72,7 +103,8 @@ kill-api-dev:
 	@echo "Attempting to stop API process..."
 	@pkill -f "target/debug/api" || echo "No API process was running"
 
-# CLIENT REQUESTS________________________________________________________________
+
+# CLIENT REQUESTS_____________________________________________________________________________________________
 request-health:
 	curl http://localhost:8080/health
 
