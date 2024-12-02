@@ -21,7 +21,7 @@ struct Args {
 
 /// Application state that will be shared across all the workers of the API endpoints
 struct AppState {
-    model: Arc<Model01>,
+    model: Arc<Model01>
 }
 
 /// Health check endpoint
@@ -55,11 +55,10 @@ async fn predict(data: web::Data<AppState>,
             actix_web::error::ErrorInternalServerError("Failed to process input data")
         })?;
 
-
     // Make prediction
     let prediction = data.model.predict(&dmatrix)
-    .map_err(|e| {
-        log::error!("Error making prediction: {}", e);
+        .map_err(|e| {
+            log::error!("Error making prediction: {}", e);
             actix_web::error::ErrorInternalServerError("Failed to generate prediction")
         })?;
     // Get the first (and only) prediction value
@@ -77,45 +76,38 @@ async fn predict(data: web::Data<AppState>,
 /// Main function to start the API server.
 #[actix_web::main]  // This attribute is used to mark the main function for the actix_web server
 async fn main() -> std::io::Result<()> {
-    // Initialize the logger
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
     info!("Starting API server...");
     dotenv().ok();
 
     // Parse command line arguments
     let args = Args::parse();
-    // Store values in new variables to avoid move issues
     let bucket_name = &args.bucket_name_s3;
     let key = &args.key_s3;
-    let region = &args.region;
 
     info!("AWS Configuration:");
     info!("Bucket: {}", bucket_name);
     info!("Key: {}", key);
-    info!("Region: {:?}", region);
 
     // Download the model from the AWS s3 bucket (model registry)
     let model_path = download_model_from_s3(&bucket_name, &key).await.unwrap();
     
     println!("Model downloaded to: {}", model_path);
 
+    // Load the model ONCE, outside the HttpServer::new closure
+    let model = load_xgboost_model(&model_path).unwrap();
+    let app_state = web::Data::new(AppState {
+        model: Arc::new(model),
+    });
+
+    info!("Creating new app instance");
+
     // Create the server and bind it to the address and port
-    HttpServer::new(move|| {
-        // Load the model into memory
-        let model = load_xgboost_model(&model_path).unwrap();
-
-        // Create the state data structure that will be shared across all the workers of the API endpoints
-        let app_state = Arc::new(AppState {
-            model: Arc::new(model),  
-        });
-
-        info!("Creating new app instance");
-
+    HttpServer::new(move || {
         App::new()
             .service(health)  // Add the health check endpoint as a worker
             .service(predict)  // Add the predict endpoint as a worker
-            .app_data(web::Data::new(app_state))  // Add the app state to the app data
+            .app_data(app_state.clone())  // Add the app state to the app data
     })
     .bind(("127.0.0.1", 8080))?
     .run() 

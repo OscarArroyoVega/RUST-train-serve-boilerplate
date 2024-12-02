@@ -3,8 +3,31 @@ use xgboost::{parameters, Booster, DMatrix};
 use xgboost::parameters::learning::Objective;
 use xgboost::parameters::tree::TreeBoosterParametersBuilder; 
 use xgboost::parameters::BoosterType; 
+use std::sync::Mutex;
+use parking_lot::RwLock; 
 
-pub type Model01 = Booster;
+// Change to use RwLock instead of Mutex
+pub struct Model01 {
+    booster: RwLock<Booster>
+}
+
+// Implement Send + Sync explicitly
+// This is safe because we're controlling all access to the Booster through RwLock
+unsafe impl Send for Model01 {}
+unsafe impl Sync for Model01 {}
+
+impl Model01 {
+    pub fn new(booster: Booster) -> Self {
+        Self {
+            booster: RwLock::new(booster)
+        }
+    }
+
+    pub fn predict(&self, data: &DMatrix) -> anyhow::Result<Vec<f32>> {
+        let booster = self.booster.read();
+        Ok(booster.predict(data)?)
+    }
+}
 
 /// Converts Polars DataFrames into XGBoost DMatrix objects
 pub fn transform_dataframe_to_dmatrix(
@@ -108,9 +131,8 @@ pub fn train_xgboost_model(
     Ok(model_path.to_string())
 }
 
-
-/// Loads an XGBoost model from a binary file and returns it
-pub fn load_xgboost_model(model_path: &str) -> anyhow::Result<Booster> {
-    let model = Booster::load(model_path)?;
-    Ok(model) 
+// Update the load function to return our new Model01 struct
+pub fn load_xgboost_model(model_path: &str) -> anyhow::Result<Model01> {
+    let booster = Booster::load(model_path)?;
+    Ok(Model01::new(booster))
 }
