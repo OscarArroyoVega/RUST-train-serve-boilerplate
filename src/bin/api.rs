@@ -1,10 +1,11 @@
 use actix_web::{HttpServer, App, Responder, HttpResponse, get, post, web};
+use xgboost::DMatrix;
 use log::info;
 use env_logger;
 use dotenv::dotenv;
-use house_price_predictor::modules::{aws::download_model_from_s3, data::{PredictionRequest, PredictionResponse}};
+use house_price_predictor::{aws::download_model_from_s3, data::{PredictionRequest, PredictionResponse}};
 use std::sync::Arc;
-use house_price_predictor::modules::model::{Model01, load_xgboost_model};
+use house_price_predictor::model::{Model01, load_xgboost_model};
 use clap:: Parser;
 
 
@@ -34,12 +35,43 @@ async fn health() -> impl Responder {
 /// Predict endpoint
 /// Accepts a JSON payload request with the features and returns a JSON response with the prediction
 #[post("/predict")]
-async fn predict(payload: web::Json<PredictionRequest>) -> Result<HttpResponse, actix_web::Error> {
+async fn predict(data: web::Data<AppState>,
+    payload: web::Json<PredictionRequest>    
+) -> Result<HttpResponse, actix_web::Error> {
     info!("Received prediction request: {:?}", payload);
-    // For now, return a dummy prediction
-    let prediction = 25.0;  // dummy value
-    println!("Prediction: {} Payload: {:?}", prediction, payload);
-    Ok(HttpResponse::Ok().json(PredictionResponse {prediction}))
+
+    // Convert payload into features vector
+    let features: Vec<f32> = vec![
+        payload.crim as f32, payload.zn as f32, payload.indus as f32, payload.chas as f32,
+        payload.nox as f32, payload.rm as f32, payload.age as f32, payload.dis as f32,
+        payload.rad as f32, payload.tax as f32, payload.ptratio as f32, payload.b as f32,
+        payload.lstat as f32
+    ];
+
+    // Create DMatrix from features
+    let dmatrix = DMatrix::from_dense(&features, 1)
+        .map_err(|e| {
+            log::error!("Error creating DMatrix: {}", e);
+            actix_web::error::ErrorInternalServerError("Failed to process input data")
+        })?;
+
+
+    // Make prediction
+    let prediction = data.model.predict(&dmatrix)
+    .map_err(|e| {
+        log::error!("Error making prediction: {}", e);
+            actix_web::error::ErrorInternalServerError("Failed to generate prediction")
+        })?;
+    // Get the first (and only) prediction value
+    let prediction_value = prediction.first()
+        .copied()
+        .unwrap_or(0.0) as f64;
+
+    println!("Made prediction: {} for Payload: {:?}", prediction_value, payload);
+
+    Ok(HttpResponse::Ok().json(PredictionResponse { 
+        prediction: prediction_value 
+    }))
 }
 
 /// Main function to start the API server.

@@ -3,7 +3,7 @@ use dotenv::dotenv;
 use log::info;
 use clap::Parser;
 
-use house_price_predictor::modules::{
+use house_price_predictor::{
     aws::push_model_to_s3,
     data::{download_csv_file, load_csv_file, train_test_split, split_features_and_target},
     model::train_xgboost_model

@@ -7,19 +7,19 @@ use anyhow::Result;
 /// Prediction request payload
 #[derive(Deserialize, Debug)]
 pub struct PredictionRequest {
-    crim: f64,
-    zn: f64,
-    indus: f64,
-    chas: f64,
-    nox: f64,
-    rm: f64,
-    age: f64,
-    dis: f64,
-    rad: f64,
-    tax: f64,
-    ptratio: f64,
-    b: f64,
-    lstat: f64
+    pub crim: f64,
+    pub zn: f64,
+    pub indus: f64,
+    pub chas: f64,
+    pub nox: f64,
+    pub rm: f64,
+    pub age: f64,
+    pub dis: f64,
+    pub rad: f64,
+    pub tax: f64,
+    pub ptratio: f64,
+    pub b: f64,
+    pub lstat: f64
 }
 
 /// Prediction response payload
