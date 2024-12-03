@@ -1,3 +1,4 @@
+#![feature(lazy_cell)]
 use tokio; // for async runtime
 use dotenv::dotenv;
 use log::info;
@@ -8,6 +9,7 @@ use house_price_predictor::{
     data::{download_csv_file, load_csv_file, train_test_split, split_features_and_target},
     model::train_xgboost_model
 };
+
 
 #[derive(Debug, Parser)]
 struct Args {

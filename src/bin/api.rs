@@ -17,7 +17,7 @@ struct Args {
     key_s3: String,
     #[arg(short, long = "region")]
     region: String,
-}
+} 
 
 /// Application state that will be shared across all the workers of the API endpoints
 struct AppState {
@@ -84,10 +84,12 @@ async fn main() -> std::io::Result<()> {
     let args = Args::parse();
     let bucket_name = &args.bucket_name_s3;
     let key = &args.key_s3;
+    let region = &args.region;
 
     info!("AWS Configuration:");
     info!("Bucket: {}", bucket_name);
     info!("Key: {}", key);
+    info!("Region: {}", region);
 
     // Download the model from the AWS s3 bucket (model registry)
     let model_path = download_model_from_s3(&bucket_name, &key).await.unwrap();

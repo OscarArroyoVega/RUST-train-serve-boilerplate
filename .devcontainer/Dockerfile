@@ -1,42 +1,37 @@
-FROM rust:1.82-bullseye as builder
+FROM rust:1.82-bullseye as builder 
 
-## Set the working directory
-WORKDIR /workspace 
+# Install nightly toolchain
+RUN rustup install nightly
+
+# Set the working directory
+WORKDIR /workspace
 
 # Install required dependencies for building
 RUN apt-get update && \
-    apt-get install -y pkg-config libssl-dev xgboost libclang-dev && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    libclang-dev \
+    cmake \
+    build-essential \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
+# Set LIBCLANG_PATH
 ENV LIBCLANG_PATH=/usr/lib/llvm-11/lib
 
-## Install required packages
-#RUN apt-get update && apt-get install -y \
-#    pkg-config \
-#    libssl-dev \
-#    libclang-dev \
-#    cmake \
-#    build-essential \
-#    git
-
 # Install XGBoost from source
-#RUN git clone --recursive https://github.com/dmlc/xgboost /tmp/xgboost && \
-#    cd /tmp/xgboost && \
-#    mkdir build && cd build && \
-#    cmake .. && \
-#    make -j$(nproc) && \
-#    make install
+RUN git clone --recursive https://github.com/dmlc/xgboost /tmp/xgboost && \
+    cd /tmp/xgboost && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && \
+    rm -rf /tmp/xgboost
 
+# Set library path to include XGBoost
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
-
-# Copy the project files into the container
-#COPY Cargo.toml Cargo.lock /workspace/
-#COPY README.md /workspace/
-#COPY src/ /workspace/src/
-#COPY boston_housing.csv /workspace/
-
-# Build the application
-#RUN cargo build --release
-
-# Set the command to run your application
 CMD ["bash"]

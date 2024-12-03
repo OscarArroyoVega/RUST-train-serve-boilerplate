@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use polars::prelude::*;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
-use anyhow::Result;
+
 
 /// Prediction request payload
 #[derive(Deserialize, Debug)]

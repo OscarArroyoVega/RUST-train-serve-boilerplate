@@ -3,7 +3,7 @@ use xgboost::{parameters, Booster, DMatrix};
 use xgboost::parameters::learning::Objective;
 use xgboost::parameters::tree::TreeBoosterParametersBuilder; 
 use xgboost::parameters::BoosterType; 
-use std::sync::Mutex;
+
 use parking_lot::RwLock; 
 
 // Change to use RwLock instead of Mutex

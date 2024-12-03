@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+
 use aws_config::meta::region::RegionProviderChain;
 use aws_config::Region;
 use aws_config::BehaviorVersion;
@@ -6,7 +6,7 @@ use anyhow::Result;
 
 
 /// Create an AWS S3 client to interact with the S3 bucket
-async fn create_s3_client() -> Result<aws_sdk_s3::Client, anyhow::Error> {
+pub async fn create_s3_client() -> Result<aws_sdk_s3::Client, anyhow::Error> {
     // Load region from environment or fall back to us-east-1
     let region_provider = RegionProviderChain::default_provider().or_else(Region::new("us-east-1"));
     
@@ -32,7 +32,7 @@ pub async fn push_model_to_s3(model_path: &str, bucket_name: &str, key: &str) ->
     let model_bytes = std::fs::read(model_path)?;
 
     // Upload the file to S3
-    let result = s3_client
+    s3_client
         .put_object()
         .bucket(bucket_name)   
         .key(key)
