@@ -4,3 +4,10 @@
 .env
 */.env
 *.env
+.devcontainer
+*.tmp_container_id
+*.bin
+*.so
+*.json
+*.lock
+
