@@ -1,4 +1,4 @@
-## Rust Boilerplate Train API 
+## Rust Boilerplate Train API  ( from *Let's Rust!* at RealWorldML.net)
 
 This is a boilerplate code for applications that download data from a data source (CSV by default), process the data, train a model (in this case, XGBoost), and push the trained model to an AWS S3 bucket. Then, a second microservice creates a server, downloads the model from the S3 bucket, and opens a request API to serve predictions using the model and the payload given by the client. 
 The database used for this boilerplate is the Boston Housing Price dataset in CSV format. All of this is written in Rust, using Polars and Cargo.
