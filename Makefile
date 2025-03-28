@@ -1,4 +1,3 @@
-
 # Get the current directory in a cross-platform way (UNIX and Windows)
 ifeq ($(OS),Windows_NT)
     PWD := $(subst \,/,$(CURDIR))
@@ -46,6 +45,7 @@ docker-shell-cache-api: docker-build
 		-v ${PWD}:/workspace \
 		-v cargo-cache-api:/usr/local/cargo/registry \
 		-v target-cache-api:/workspace/house-price-predictor/target \
+		-p 8080:8080 \
 		--name house-price-predictor-api \
 		house-price-predictor
 
@@ -116,6 +116,7 @@ run-api-dev:
 		--bucket-name-s3="$(AWS_BUCKET_NAME)" \
 		--key-s3="$(AWS_KEY)" \
 		--region="$(AWS_REGION)" \
+
 
 kill-api-dev:
 	@echo "Checking for API processes..."
