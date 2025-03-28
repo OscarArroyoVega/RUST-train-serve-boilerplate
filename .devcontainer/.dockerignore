@@ -1,0 +1,8 @@
+# Ignore Git repository
+.git/
+
+# Ignore build artifacts
+target/
+
+# Ignore devcontainer configuration to prevent nested copies
+.devcontainer/
