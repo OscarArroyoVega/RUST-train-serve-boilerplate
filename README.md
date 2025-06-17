@@ -35,5 +35,4 @@ This project was done following Pau Labarta Bajo as the instructor for this coho
 The data processing service will download the Boston Housing Price dataset, process it, train an XGBoost model, and upload the model to an AWS S3 bucket.
 The prediction API server will download the trained model from the S3 bucket and serve predictions based on the client payload.
 
-#### License
-*You can customize further based on your project specifics and instructions.
+
