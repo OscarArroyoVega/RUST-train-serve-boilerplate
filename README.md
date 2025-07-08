@@ -15,7 +15,10 @@ This project was done following Pau Labarta Bajo as the instructor for this coho
 - Polars
 - Cargo
 - Docker
-- AWS s3
+- AWS s3, ec2
+- ngrok
+- streamlit
+
 
 #### Prerequisites
 - Make
@@ -23,7 +26,7 @@ This project was done following Pau Labarta Bajo as the instructor for this coho
 - Rust-Analyzer (recomemnded)
 - Cargo
 - Docker
-- AWS account with S3 bucket
+- AWS account
 
 #### Getting Started
 1. Clone the repository:
@@ -33,6 +36,6 @@ This project was done following Pau Labarta Bajo as the instructor for this coho
    
 ### Usage
 The data processing service will download the Boston Housing Price dataset, process it, train an XGBoost model, and upload the model to an AWS S3 bucket.
-The prediction API server will download the trained model from the S3 bucket and serve predictions based on the client payload.
+The prediction API server once deployed will download the trained model from the S3 bucket and serve predictions based on the client payload. A streamlit basic frontend has been built to complete the system.
 
 
