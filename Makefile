@@ -173,3 +173,39 @@ docker-stop-api-prod:
 # View API logs
 docker-logs-api-prod:
 	docker logs -f house-price-predictor-api
+
+
+# STREAMLIT FRONTEND_________________________________________________________________________________________
+# Build the Streamlit Docker image
+docker-build-streamlit:
+	docker build -f docker/dockerfile.streamlit -t house-price-streamlit:latest .
+
+# Run Streamlit container locally for testing
+docker-run-streamlit-local:
+	docker run -d \
+		--name house-price-streamlit \
+		-p 8501:8501 \
+		-e STREAMLIT_SERVER_ADDRESS=0.0.0.0 \
+		-e STREAMLIT_SERVER_PORT=8501 \
+		house-price-streamlit:latest
+
+# Stop Streamlit container
+docker-stop-streamlit:
+	docker stop house-price-streamlit
+	docker rm house-price-streamlit
+
+# View Streamlit logs
+docker-logs-streamlit:
+	docker logs -f house-price-streamlit
+
+# Run Streamlit container for EC2 deployment
+docker-run-streamlit-ec2:
+	docker run -d \
+		--name house-price-streamlit \
+		--restart unless-stopped \
+		-p 8501:8501 \
+		-e STREAMLIT_SERVER_ADDRESS=0.0.0.0 \
+		-e STREAMLIT_SERVER_PORT=8501 \
+		-e STREAMLIT_SERVER_HEADLESS=true \
+		-e STREAMLIT_BROWSER_GATHER_USAGE_STATS=false \
+		house-price-streamlit:latest

@@ -43,7 +43,7 @@ pub fn download_csv_file(
     //copy this bytes to a disk
 
     // create a file path
-    let file_path = "boston_housing.csv";   
+    let file_path = "data/boston_housing.csv";   
 
     // Copy the bytes to a file on disk
     std::fs::write(file_path, bytes)?;  

@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 import requests
 import json
 import plotly.graph_objects as go
@@ -10,7 +11,7 @@ from PIL import Image
 # API_BASE = "http://localhost:8080" # LOCAL URL
 API_BASE = "http://3.95.132.214:80"  # Your EC2 API
 
-st.title('House Price Predictor for Boston Housing Dataset using XGBoost in Rust')
+st.title('House Price Predictor for Boston Housing Dataset (1970s)')
 
 # Add image below the title
 
@@ -24,26 +25,28 @@ st.markdown("---")
 col1, col2 = st.columns(2)
 
 with col1:
-    crim = st.slider('Crime rate', min_value=0.0, max_value=100.0, value=0.00632, step=0.01)
-    zn = st.slider('Proportion of residential land zoned', min_value=0.0, max_value=100.0, value=18.0, step=1.0)
-    indus = st.slider('Proportion of non-retail business acres', min_value=0.0, max_value=30.0, value=2.31, step=0.01)
+    crim = st.slider('Crime rate', min_value=0.00632, max_value=88.9762, value=3.613524, step=0.1)
+    zn = st.slider('Proportion of residential land zoned', min_value=0.0, max_value=100.0, value=11.363636, step=1.0)
+    indus = st.slider('Proportion of non-retail business acres', min_value=0.46, max_value=27.74, value=11.136779, step=0.1)
     chas = st.selectbox('Charles River dummy variable', options=[0.0, 1.0], index=0)
-    nox = st.slider('Nitric oxides concentration', min_value=0.0, max_value=1.0, value=0.538, step=0.001)
-    rm = st.slider('number of rooms', min_value=3.0, max_value=9.0, value=6.575, step=0.1)
+    nox = st.slider('Nitric oxides concentration', min_value=0.385, max_value=0.871, value=0.554695, step=0.001)
+    rm = st.slider('number of rooms', min_value=3.561, max_value=8.78, value=6.284634, step=0.1)
     
 with col2:
-    age = st.slider('Proportion of owner-occupied units built prior to 1940', min_value=0.0, max_value=100.0, value=65.2, step=1.0)
-    dis = st.slider('Weighted distances to employment centres', min_value=1.0, max_value=12.0, value=4.0900, step=0.1)
-    rad = st.slider('Index of accessibility to radial highways', min_value=1.0, max_value=24.0, value=1.0, step=1.0)
-    tax = st.slider('Property-tax rate', min_value=100.0, max_value=800.0, value=296.0, step=1.0)
-    ptratio = st.slider('Pupil-teacher ratio', min_value=12.0, max_value=22.0, value=15.3, step=0.1)
-    rac = st.slider("Racial composition index (legacy feature)", min_value=0.0, max_value=1.0, step=0.01)
+    age = st.slider('Proportion of owner-occupied units built prior to 1940', min_value=2.9, max_value=100.0, value=68.574901, step=1.0)
+    dis = st.slider('Weighted distances to employment centres', min_value=1.1296, max_value=12.1265, value=3.795043, step=0.1)
+    rad = st.slider('Index of accessibility to radial highways', min_value=1.0, max_value=24.0, value=9.549407, step=1.0)
+    tax = st.slider('Property-tax rate', min_value=187.0, max_value=711.0, value=408.237154, step=1.0)
+    ptratio = st.slider('Pupil-teacher ratio', min_value=12.6, max_value=22.0, value=18.455534, step=0.1)
+    rac = st.slider("Racial composition index (legacy feature)", min_value=0.0, max_value=1.0, value=0.0, step=0.01)
 
-    lstat = st.slider('% lower status of the population', min_value=1.0, max_value=40.0, value=4.98, step=0.01)
+    lstat = st.slider('% lower status of the population', min_value=1.73, max_value=37.97, value=12.653063, step=0.01)
 
 # Add sidebar note about dataset bias
 
-image = Image.open('boston_housing.png')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+image_path = os.path.join(script_dir, 'assets', 'boston_housing.png')
+image = Image.open(image_path)
 
 st.sidebar.image(image)
 st.sidebar.markdown("---")
@@ -60,7 +63,7 @@ st.sidebar.markdown("---")
 # Add development context note
 st.sidebar.markdown("### 🦀 Development Context")
 st.sidebar.info(
-    "Note: This application is being developed as part of the \"Let's Rust!\" "
+    "Note: The core funtionality of the application was developed as part of the \"Let's Rust!\" "
     "cohort led by Pau Labarta Bajo, focusing on building real-world machine "
     "learning systems using Rust."
 )
@@ -68,14 +71,19 @@ st.sidebar.info(
 # Create a radar chart for key metrics
 def create_radar_chart(input_values):
     categories = ['Rooms', 'Crime Rate', 'Age', 'Distance', 'Tax Rate', 'School Ratio']
+    
+    # Normalize values using actual data ranges from the dataset
     values = [
-        input_values['rm'] / 9,  # Normalize to 0-1
-        input_values['crim'] / 100,  # Normalize to 0-1
-        input_values['age'] / 100,  # Normalize to 0-1
-        input_values['dis'] / 12,   # Normalize to 0-1
-        input_values['tax'] / 800,  # Normalize to 0-1
-        input_values['ptratio'] / 22 # Normalize to 0-1
+        (input_values['rm'] - 3.561) / (8.78 - 3.561),  # RM: min=3.561, max=8.78
+        (input_values['crim'] - 0.00632) / (88.9762 - 0.00632),  # CRIM: min=0.00632, max=88.9762
+        (input_values['age'] - 2.9) / (100.0 - 2.9),  # AGE: min=2.9, max=100.0
+        (input_values['dis'] - 1.1296) / (12.1265 - 1.1296),  # DIS: min=1.1296, max=12.1265
+        (input_values['tax'] - 187.0) / (711.0 - 187.0),  # TAX: min=187.0, max=711.0
+        (input_values['ptratio'] - 12.6) / (22.0 - 12.6)  # PTRATIO: min=12.6, max=22.0
     ]
+    
+    # Ensure values are within [0, 1] range
+    values = [max(0, min(1, v)) for v in values]
     
     fig = go.Figure()
     fig.add_trace(go.Scatterpolar(

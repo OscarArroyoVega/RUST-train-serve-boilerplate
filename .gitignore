@@ -1,3 +1,4 @@
+# Rust (keep existing)
 /target
 *.csv
 .DS_Store
@@ -13,6 +14,25 @@
 *.pem
 *.tar
 *.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Data and Models
+data/raw/
+data/processed/
+models/*.bin
+
+# IDE
+.vscode/
+.idea/
 
 
 

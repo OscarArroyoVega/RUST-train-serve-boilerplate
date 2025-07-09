@@ -51,7 +51,7 @@ pub async fn download_model_from_s3(bucket_name: &str, key: &str) -> Result<Stri
     // Create an AWS S3 client to interact with the S3 bucket
     let s3_client = create_s3_client().await?;
 
-    let download_path = String::from("DownloadedBostonHousingModel.bin");
+    let download_path = String::from("models/DownloadedBostonHousingModel.bin");
     
 
     // Download the content of the model from S3

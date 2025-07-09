@@ -124,7 +124,7 @@ pub fn train_xgboost_model(
     println!("Test predictions (first 5): {:?}", &predictions[..5.min(predictions.len())]);
 
     // Save the model to a file
-    let model_path = "BostonHousingModel.bin";
+    let model_path = "models/BostonHousingModel.bin";
     model.save(model_path)?;
     println!("Model saved to: {}", model_path);
 
