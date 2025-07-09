@@ -30,11 +30,9 @@ RUN git clone --recursive https://github.com/dmlc/xgboost /tmp/xgboost && \
     make -j$(nproc) && \
     make install && \
     cd / && \
-    rm -rf /tmp/xgboost
+    rm -rf /tmp/xgboost  
 
-
-    
-# Copy your project files
+# copy of source code
 COPY . .
 
 # Build release binaries for api and train
@@ -54,6 +52,7 @@ RUN apt-get update && \
     apt-get install -y \
     libssl1.1 \
     ca-certificates \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy XGBoost library from builder
@@ -71,15 +70,10 @@ RUN chown -R app:app /app
 USER app
 
 # Create an entrypoint script
-COPY --chown=app:app <<EOF /app/entrypoint.sh
-#!/bin/bash
-if [ "\$RUN_MODE" = "train" ]; then
-    exec ./train "\$@"
-else
-    exec ./api "\$@"
-fi
-EOF
-
-RUN chmod +x /app/entrypoint.sh
-
-ENTRYPOINT ["/app/entrypoint.sh"]
+RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
+    echo 'if [ "$RUN_MODE" = "train" ]; then' >> /app/entrypoint.sh && \
+    echo '    exec ./train "$@"' >> /app/entrypoint.sh && \
+    echo 'else' >> /app/entrypoint.sh && \
+    echo '    exec ./api "$@"' >> /app/entrypoint.sh && \
+    echo 'fi' >> /app/entrypoint.sh && \
+    chmod +x /app/entrypoint.sh

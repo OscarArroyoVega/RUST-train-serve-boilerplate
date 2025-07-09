@@ -9,4 +9,11 @@
 *.so
 *.json
 *.lock
+.pem
+*.pem
+*.tar
+*.tar.gz
+
+
+
 

@@ -8,14 +8,19 @@ This project was done following Pau Labarta Bajo as the instructor for this coho
 - Data download and processing
 - Model training with XGBoost
 - Model storage in AWS S3
-- Prediction API server
+- Prediction API server in EC2
+- Streamlit frontend to test the API
 
 #### Tech Stack
 - Rust
+- Python
 - Polars
 - Cargo
 - Docker
-- AWS s3
+- AWS s3, EC2
+- ngrok (for local tests)
+- streamlit
+
 
 #### Prerequisites
 - Make
@@ -23,7 +28,7 @@ This project was done following Pau Labarta Bajo as the instructor for this coho
 - Rust-Analyzer (recomemnded)
 - Cargo
 - Docker
-- AWS account with S3 bucket
+- AWS account
 
 #### Getting Started
 1. Clone the repository:
@@ -33,6 +38,15 @@ This project was done following Pau Labarta Bajo as the instructor for this coho
    
 ### Usage
 The data processing service will download the Boston Housing Price dataset, process it, train an XGBoost model, and upload the model to an AWS S3 bucket.
-The prediction API server will download the trained model from the S3 bucket and serve predictions based on the client payload.
+The prediction API server once deployed will download the trained model from the S3 bucket and serve predictions based on the client payload. A streamlit basic frontend has been built to complete the system.
+
+
+### Deployment in AWS
+For deploying the service to an EC2 instance is recommended to compress the local docker image into a .tar file instead of cloning the repository and building it again inside the instance. This is to avoid cloning again the XGBoost package (slow approach).
+Access to the API service is configured to be just accessible from the frontend application.
+The API service restarts automatically.
+The frontend runs with nohup (will survive disconnect)
+
+
 
 
