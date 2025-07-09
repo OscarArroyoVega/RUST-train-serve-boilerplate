@@ -158,11 +158,7 @@ docker-run-api-prod:
 		--name house-price-predictor-api \
 		--restart unless-stopped \
 		--env-file .env \
-<<<<<<< HEAD
 		-p 80:8080 \
-=======
-		-p 8080:8080 \
->>>>>>> 5df1b0b69780154b10a112f628705f2596a5c1f1
 		house-price-predictor:prod \
 		/app/api \
 		--bucket-name-s3="$(AWS_BUCKET_NAME)" \

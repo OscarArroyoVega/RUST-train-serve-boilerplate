@@ -7,13 +7,8 @@ import pandas as pd
 from PIL import Image
 
 # API_BASE = "https://10d5-2-36-96-217.ngrok-free.app" # NGROK URL
-<<<<<<< HEAD
 # API_BASE = "http://localhost:8080" # LOCAL URL
 API_BASE = "http://3.95.132.214:80"  # Your EC2 API
-=======
-API_BASE = "http://localhost:8080" # LOCAL URL
-# API_BASE = "https://api.house-price-predictor.com" # IN AWS ec2/lightsail
->>>>>>> 5df1b0b69780154b10a112f628705f2596a5c1f1
 
 st.title('House Price Predictor for Boston Housing Dataset using XGBoost in Rust')
 
@@ -21,16 +16,10 @@ st.title('House Price Predictor for Boston Housing Dataset using XGBoost in Rust
 
 
 # Create input fields for all features 
-<<<<<<< HEAD
 st.subheader('Tech Stack: Rust, Python, Docker, XGBoost, Streamlit, AWS S3, AWS EC2')
 st.markdown("---")
 st.markdown("##### Select the feature values to predict the price of a house in Boston.")
 st.markdown("This is the frontend for the house price predictor inferences service. The backend is a Rust executable binary with an accessible RESt API running in an EC2 instance. The model has been trained also with rust and saved in an S3 bucket.")
-=======
-st.subheader('Tech Stack: Rust, Python, AWS S3, Docker, XGBoost, Streamlit, NGROK, AWS Lightsail')
-st.markdown("---")
-st.markdown("##### Select the feature values to predict the price of a house in Boston.")
->>>>>>> 5df1b0b69780154b10a112f628705f2596a5c1f1
 st.markdown("---")
 col1, col2 = st.columns(2)
 
@@ -56,11 +45,7 @@ with col2:
 
 image = Image.open('boston_housing.png')
 
-<<<<<<< HEAD
 st.sidebar.image(image)
-=======
-st.sidebar.image(image, use_container_width=True)
->>>>>>> 5df1b0b69780154b10a112f628705f2596a5c1f1
 st.sidebar.markdown("---")
 st.sidebar.markdown("### ⚠️ Note on Dataset Bias")
 
