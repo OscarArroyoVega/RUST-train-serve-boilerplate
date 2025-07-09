@@ -1,8 +1,13 @@
-## Rust Train&Serve- Boilerpalte  (evolved from *Let's Rust!* at RealWorldML.net)
+## Rust Train&Serve- Boilerpalte  (evolved from *Let's Rust!* at RealWorldML.net) - ready for deployment
+
+![Video_preview](https://github.com/user-attachments/assets/4b865f50-c1a3-4466-a8a7-4b467f856e3c)[Watch video preview](https://github.com/user-attachments/assets/7e0ee4cc-6703-4c7b-b84b-b871cff2e5bc)
+
+
+
 
 This is a boilerplate code for applications that download data from a data source (CSV by default), process the data, train a model (in this case, XGBoost), and push the trained model to an AWS S3 bucket. Then, a second microservice creates a server, downloads the model from the S3 bucket, and opens a request API to serve predictions using the model and the payload given by the client. 
 The database used for this boilerplate is the Boston Housing Price dataset in CSV format. All of this is written in Rust, using Polars.
-This project was done following Pau Labarta Bajo as the instructor for this cohort to "learn Rust together".
+The main funtionalities of the repository were done following Pau Labarta Bajo as the instructor for the cohort "learn Rust together".
 
 #### Features
 - Data download and processing
@@ -42,10 +47,10 @@ The prediction API server once deployed will download the trained model from the
 
 
 ### Deployment in AWS
-For deploying the service to an EC2 instance is recommended to compress the local docker image into a .tar file instead of cloning the repository and building it again inside the instance. This is to avoid cloning again the XGBoost package (slow approach).
+For deploying the inference service to an EC2 instance (or any other that supports multiple containers) is recommended to compress the local docker image into a .tar file instead of cloning the repository and building it again inside the instance. This is to avoid cloning again the XGBoost package (slow approach).
 Access to the API service is configured to be just accessible from the frontend application.
 The API service restarts automatically.
-The frontend runs with nohup (will survive disconnect)
+The frontend runs also in docker.
 
 
 
