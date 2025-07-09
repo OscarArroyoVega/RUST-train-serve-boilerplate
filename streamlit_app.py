@@ -6,9 +6,9 @@ import plotly.express as px
 import pandas as pd
 from PIL import Image
 
-API_BASE = "https://10d5-2-36-96-217.ngrok-free.app" # NGROK URL
-# API_BASE = "http://localhost:8080" # LOCAL URL
-# API_BASE = "https://api.house-price-predictor.com" # IN AWS LIGHTSAIL
+# API_BASE = "https://10d5-2-36-96-217.ngrok-free.app" # NGROK URL
+API_BASE = "http://localhost:8080" # LOCAL URL
+# API_BASE = "https://api.house-price-predictor.com" # IN AWS ec2/lightsail
 
 st.title('House Price Predictor for Boston Housing Dataset')
 
@@ -16,7 +16,10 @@ st.title('House Price Predictor for Boston Housing Dataset')
 
 
 # Create input fields for all features 
-st.subheader('Tech Stack: Rust, Python, AWS S3, Docker, XGBoost, Streamlit, NGROK')
+st.subheader('Tech Stack: Rust, Python, AWS S3, Docker, XGBoost, Streamlit, NGROK, AWS Lightsail')
+st.markdown("---")
+st.markdown("##### Select the feature values to predict the price of a house in Boston.")
+st.markdown("---")
 col1, col2 = st.columns(2)
 
 with col1:
@@ -39,16 +42,27 @@ with col2:
 
 # Add sidebar note about dataset bias
 
-st.sidebar.markdown("### ⚠️ Note on Dataset Bias")
 image = Image.open('boston_housing.png')
+
 st.sidebar.image(image, use_container_width=True)
+st.sidebar.markdown("---")
+st.sidebar.markdown("### ⚠️ Note on Dataset Bias")
+
 st.sidebar.info(
-    "This dataset includes a legacy feature related to racial demographics "
+    "THE BOSTON HOUSING DATASET includes a legacy feature related to racial demographics "
     "that is widely recognized as ethically problematic. It has been retained "
     "for transparency, but please interpret it with caution. In real-world applications, "
-    "this feature would typically be excluded or used only to study and mitigate bias."
+    "this feature would typically be excluded or used only to study and mitigate bias. "
+    "The data was originally published by Harrison, D. and Rubinfeld, D.L. `Hedonic prices and the demand for clean air', J. Environ. Economics & Management, vol.5, 81-102, 1978."
 )
-
+st.sidebar.markdown("---")
+# Add development context note
+st.sidebar.markdown("### 🦀 Development Context")
+st.sidebar.info(
+    "Note: This application is being developed as part of the \"Let's Rust!\" "
+    "cohort led by Pau Labarta Bajo, focusing on building real-world machine "
+    "learning systems using Rust."
+)
 
 # Create a radar chart for key metrics
 def create_radar_chart(input_values):

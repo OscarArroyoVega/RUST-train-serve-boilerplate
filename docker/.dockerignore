@@ -1,0 +1,11 @@
+target/
+.git/
+.gitignore
+README.md
+*.md
+.env
+.venv/
+__pycache__/
+*.pyc
+.vscode/
+.idea/

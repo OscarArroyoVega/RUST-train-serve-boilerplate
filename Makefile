@@ -136,7 +136,11 @@ request-predict-dev:
 # DOCKER FOR PRODUCTION_______________________________________________________________________________________
 # Build the production image
 docker-build-prod:
-	docker build -t house-price-predictor:prod -f docker/dockerfile .
+	docker build \
+		--build-arg BUILDKIT_INLINE_CACHE=1 \
+		--cache-from house-price-predictor:prod \
+		-t house-price-predictor:prod \
+		-f docker/dockerfile .
 
 # Run the training container
 docker-run-train-prod:
@@ -153,13 +157,12 @@ docker-run-api-prod:
 	docker run -d \
 		--name house-price-predictor-api \
 		--env-file .env \
-		-e RUN_MODE=api \
 		-p 8080:8080 \
 		house-price-predictor:prod \
+		/app/api \
 		--bucket-name-s3="$(AWS_BUCKET_NAME)" \
 		--key-s3="$(AWS_KEY)" \
-		--region="$(AWS_REGION)" \
-		--port=8080
+		--region="$(AWS_REGION)"
 
 # Stop the API container
 docker-stop-api-prod:
