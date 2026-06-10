@@ -1,3 +1,5 @@
+> ⏸️ This repo is not actively maintained at the moment. Kept for reference.
+
 ## Rust Train&Serve- Boilerpalte  (evolved from *Let's Rust!* at RealWorldML.net) - ready for deployment
 
 ![Video_preview](https://github.com/user-attachments/assets/4b865f50-c1a3-4466-a8a7-4b467f856e3c)[Watch video preview](https://github.com/user-attachments/assets/7e0ee4cc-6703-4c7b-b84b-b871cff2e5bc)
